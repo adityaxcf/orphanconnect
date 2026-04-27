@@ -1,7 +1,6 @@
 # OrphanConnect 🏠
 
 A web platform to connect orphanages in Hubli, Karnataka with donors, volunteers, and adoptive parents.
-This was developed as a 4th Semester Software Engineering (SE) and Web Technologies (WT) project.
 
 ## Features
 - Browse orphanages in Hubli
@@ -17,3 +16,6 @@ This was developed as a 4th Semester Software Engineering (SE) and Web Technolog
 - **Database:** MongoDB Atlas
 - **Payment:** Razorpay
 - **Auth:** JWT
+
+## Developer
+Built by me (Aditya J) as a 4th Semester Software Engineering (SE) and Web Technologies (WT) project.
