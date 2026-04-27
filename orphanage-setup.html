@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orphanage Setup - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+
+    <div class="branding">
+        <span class="brand-icon">🏠</span>
+        <span class="brand-name">OrphanConnect</span>
+    </div>
+
+    <div class="hero-text">
+        <h1 class="hero-title">Set up your<br><span>Orphanage Profile.</span></h1>
+        <p class="hero-sub">This information will appear on your orphanage's public page.</p>
+    </div>
+
+    <div class="wrapper">
+        <div class="card floating setup-card">
+            <div class="card-accent"></div>
+            <div class="step-indicator">
+                <div class="step-dot done"></div>
+                <div class="step-connector"></div>
+                <div class="step-dot active" id="dot-2"></div>
+                <div class="step-connector"></div>
+                <div class="step-dot" id="dot-3"></div>
+            </div>
+
+            <div class="step-panel active" id="step-1">
+                <p class="step-header">Step 1 of 2 — Basic Information</p>
+                <div class="field">
+                    <label>Orphanage Name</label><br>
+                    <input type="text" id="orphanage-name" placeholder="e.g. Shanti Nivas Orphanage">
+                </div>
+                <div class="field">
+                    <label>About / Description</label><br>
+                    <textarea id="about" placeholder="Describe your orphanage..."></textarea>
+                </div>
+                <div class="field">
+                    <label>Address</label><br>
+                    <input type="text" id="address" placeholder="Full address, Hubli, Karnataka">
+                </div>
+                <div class="field">
+                    <label>Established Year (Optional)</label><br>
+                    <input type="text" id="established" placeholder="e.g. 2005">
+                </div>
+                <div class="step-nav">
+                    <button onclick="goStep(2)">Next →</button>
+                </div>
+            </div>
+
+            <div class="step-panel" id="step-2">
+                <p class="step-header">Step 2 of 2 — Capacity & Facilities</p>
+                <div class="field">
+                    <label>Total Capacity</label><br>
+                    <input type="number" id="capacity" placeholder="e.g. 50" min="1">
+                </div>
+                <div class="field">
+                    <label>Currently Occupied</label><br>
+                    <input type="number" id="occupied" placeholder="e.g. 38" min="0">
+                </div>
+                <div class="field">
+                    <label>Facilities Available</label>
+                    <div class="facilities-check">
+                        <label class="fac-item"><input type="checkbox" value="🍽️ Meals"> 🍽️ Meals</label>
+                        <label class="fac-item"><input type="checkbox" value="📚 Library"> 📚 Library</label>
+                        <label class="fac-item"><input type="checkbox" value="🏥 Medical"> 🏥 Medical</label>
+                        <label class="fac-item"><input type="checkbox" value="🛏️ Dormitory"> 🛏️ Dormitory</label>
+                        <label class="fac-item"><input type="checkbox" value="⚽ Sports"> ⚽ Sports</label>
+                        <label class="fac-item"><input type="checkbox" value="🧹 Hygiene"> 🧹 Hygiene</label>
+                        <label class="fac-item"><input type="checkbox" value="💻 Computer Lab"> 💻 Computer Lab</label>
+                        <label class="fac-item"><input type="checkbox" value="🎨 Arts & Crafts"> 🎨 Arts & Crafts</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Google Maps Embed Link (Optional)</label><br>
+                    <input type="text" id="map-link" placeholder="Paste Google Maps embed src URL here">
+                </div>
+                <div class="step-nav">
+                    <button class="btn-secondary btn-back-narrow" onclick="goStep(1)">← Back</button>
+                    <button onclick="handleSetupSubmit()">Submit for Approval ✓</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://localhost:3001/api";
+        var currentStep = 1;
+
+        function goStep(n){
+            if(n===2){
+                if(document.getElementById("orphanage-name").value.trim()==""){alert("Orphanage name cannot be blank.");return;}
+                if(document.getElementById("about").value.trim()==""){alert("Please write a short description.");return;}
+                if(document.getElementById("address").value.trim()==""){alert("Address cannot be blank.");return;}
+            }
+            document.getElementById("step-"+currentStep).classList.remove("active");
+            currentStep=n;
+            document.getElementById("step-"+currentStep).classList.add("active");
+            document.getElementById("dot-3").classList.toggle("active", n===2);
+        }
+
+        async function handleSetupSubmit(){
+            var capacity = document.getElementById("capacity").value.trim();
+            var occupied = document.getElementById("occupied").value.trim();
+            if(capacity==""){alert("Please enter total capacity.");return;}
+            if(occupied==""){alert("Please enter current occupancy.");return;}
+            if(parseInt(occupied)>parseInt(capacity)){alert("Occupied cannot exceed total capacity.");return;}
+
+            var facilities=[];
+            document.querySelectorAll(".facilities-check input:checked").forEach(function(cb){facilities.push(cb.value);});
+
+            var ownerData = JSON.parse(localStorage.getItem("pendingOwner")||"{}");
+
+            var body = {
+                name: ownerData.name,
+                email: ownerData.email,
+                password: ownerData.password,
+                phone: ownerData.phone,
+                orphanage: {
+                    name: document.getElementById("orphanage-name").value.trim(),
+                    about: document.getElementById("about").value.trim(),
+                    address: document.getElementById("address").value.trim(),
+                    established: document.getElementById("established").value.trim(),
+                    capacity: parseInt(capacity),
+                    occupied: parseInt(occupied),
+                    vacant: parseInt(capacity)-parseInt(occupied),
+                    facilities: facilities,
+                    mapLink: document.getElementById("map-link").value.trim()
+                }
+            };
+
+            var res = await fetch(API+"/auth/register-owner", {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify(body)
+            });
+            var data = await res.json();
+
+            if(!res.ok){alert(data.error);return;}
+
+            localStorage.removeItem("pendingOwner");
+            alert("Your orphanage has been submitted for admin approval! You can login once approved.");
+            window.location.href = "login.html";
+        }
+    </script>
+
+</body>
+</html>

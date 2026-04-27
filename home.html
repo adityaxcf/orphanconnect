@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span>🏠</span>
+            <span>OrphanConnect</span>
+        </div>
+        <div class="nav-right">
+            <a href="tickets.html" class="nav-tickets">🎫 My Tickets</a>
+            <a href="login.html" class="nav-logout" onclick="localStorage.clear()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="home-hero">
+        <h1>Orphanages in <span>Hubli</span></h1>
+        <p>Click on any orphanage to view details, facilities, location and more.</p>
+    </div>
+
+    <div class="cards-container" id="cards-container">
+        <p style="color:#9ca3af;font-size:14px;">Loading orphanages...</p>
+    </div>
+
+    <footer class="footer">
+        <p>© 2025 OrphanConnect &nbsp;|&nbsp; Hubli, Karnataka</p>
+    </footer>
+
+    <script>
+        const API = "http://localhost:3001/api";
+
+        // ✅ FIX: auth guard
+        if(!localStorage.getItem("token")){ window.location.href = "login.html"; }
+
+        const CARD_COLORS = ["card-top-1","card-top-2","card-top-3"];
+        const CARD_EMOJIS = ["🏡","🏘️","🏠","🏛️","🏫"];
+        const PLACEHOLDERS = [
+            {name:"Orphanage 1", address:"Hubli, Karnataka", about:"A safe and caring home providing shelter, education and love to children in need.", capacity:"—", vacant:"—"},
+            {name:"Orphanage 2", address:"Hubli, Karnataka", about:"Dedicated to the holistic development of every child through care and community.", capacity:"—", vacant:"—"},
+            {name:"Orphanage 3", address:"Hubli, Karnataka", about:"Empowering children with education, healthcare and a nurturing environment.", capacity:"—", vacant:"—"}
+        ];
+
+        function buildCard(name, address, about, capacity, vacant, colorClass, emoji, link){
+            var clickable = link !== "#";
+            return '<div class="orphanage-card" '+(clickable ? 'onclick="window.location.href=\''+link+'\'"' : 'style="cursor:default;opacity:0.6"')+'>' +
+                '<div class="card-top '+colorClass+'"><div class="card-emoji">'+emoji+'</div></div>' +
+                '<div class="card-body">' +
+                '<h3>'+name+'</h3>' +
+                '<p class="card-location">📍 '+address+'</p>' +
+                '<p class="card-desc">'+about+'</p>' +
+                '<div class="card-stats">' +
+                '<div class="stat"><span class="stat-num">'+capacity+'</span><span class="stat-label">Capacity</span></div>' +
+                '<div class="stat-divider"></div>' +
+                '<div class="stat"><span class="stat-num">'+vacant+'</span><span class="stat-label">Vacant</span></div>' +
+                '</div>' +
+                (clickable ? '<button class="view-btn">View Details →</button>' : '<button class="view-btn" disabled style="background:#ccc;box-shadow:none;cursor:default;">Not listed yet</button>') +
+                '</div></div>';
+        }
+
+        async function loadCards(){
+            var container = document.getElementById("cards-container");
+            try {
+                var res = await fetch(API+"/orphanages");
+                var approved = await res.json();
+                var total = Math.max(3, approved.length);
+                var html = "";
+                for(var i=0; i<total; i++){
+                    var colorClass = CARD_COLORS[i % CARD_COLORS.length];
+                    var emoji = CARD_EMOJIS[i % CARD_EMOJIS.length];
+                    if(i < approved.length){
+                        var o = approved[i];
+                        html += buildCard(o.name, o.address, o.about, o.capacity, o.vacant, colorClass, emoji, "orphanage.html?id="+o._id);
+                    } else {
+                        var p = PLACEHOLDERS[i] || PLACEHOLDERS[2];
+                        html += buildCard(p.name, p.address, p.about, p.capacity, p.vacant, colorClass, emoji, "#");
+                    }
+                }
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<p style="color:red;font-size:14px;">Could not connect to server. Make sure backend is running.</p>';
+            }
+        }
+
+        loadCards();
+    </script>
+
+</body>
+</html>

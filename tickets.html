@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Tickets - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand"><span>🏠</span><span>OrphanConnect</span></div>
+        <div class="nav-right">
+            <a href="home.html" class="nav-back">← Back to Home</a>
+            <a href="login.html" class="nav-logout" onclick="localStorage.clear()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="tickets-wrapper">
+        <div class="tickets-header">
+            <h1>My Tickets</h1>
+            <p>Track your donation, volunteer and adoption requests.</p>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="filterTickets('all', this)">All</button>
+            <button class="tab-btn" onclick="filterTickets('donate', this)">Donations</button>
+            <button class="tab-btn" onclick="filterTickets('volunteer', this)">Volunteer</button>
+            <button class="tab-btn" onclick="filterTickets('adopt', this)">Adoption</button>
+        </div>
+        <div id="tickets-list"></div>
+    </div>
+
+    <script>
+        const API = "http://localhost:3001/api";
+        var allTickets = [];
+        var currentFilter = "all";
+
+        // ✅ FIX: auth guard
+        if(!localStorage.getItem("token")){ window.location.href = "login.html"; }
+
+        function getToken(){ return localStorage.getItem("token")||""; }
+
+        async function loadTickets(){
+            var res = await fetch(API+"/tickets/mine", {
+                headers: {"Authorization":"Bearer "+getToken()}
+            });
+            allTickets = await res.json();
+            renderTickets(currentFilter);
+        }
+
+        function filterTickets(type, btn){
+            currentFilter = type;
+            document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("active");});
+            btn.classList.add("active");
+            renderTickets(type);
+        }
+
+        function renderTickets(type){
+            var list = document.getElementById("tickets-list");
+            // ✅ FIX: include adopt-final in the adopt filter
+            var filtered = type==="all"
+                ? allTickets
+                : allTickets.filter(function(t){ return t.type===type || t.type===type+"-final"; });
+
+            if(filtered.length===0){
+                list.innerHTML='<div class="tickets-empty-state"><div class="empty-icon">🎫</div><p>No tickets found.<br><a href="home.html">Browse orphanages</a> to donate, volunteer or adopt.</p></div>';
+                return;
+            }
+
+            var html="";
+            filtered.forEach(function(ticket){
+                var icon = ticket.type.startsWith("donate") ? "💰" : ticket.type.startsWith("volunteer") ? "🤝" : "👶";
+                var typeName = ticket.type.startsWith("donate") ? "Donation" : ticket.type.startsWith("volunteer") ? "Volunteer" : "Adoption";
+                var date = new Date(ticket.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+                var detail = "";
+                if(ticket.type==="donate") detail = ticket.donationType==="Money" ? "₹"+ticket.amount : ticket.donationType;
+                if(ticket.type==="volunteer") detail = ticket.helpType+" · "+ticket.availability;
+                if(ticket.type==="adopt") detail = "Adoption request · Age pref: "+ticket.agePref;
+                if(ticket.type==="adopt-final") detail = "Final adoption request for "+ticket.childName;
+
+                var actionBtn = "";
+                if(ticket.type==="adopt" && ticket.status==="approved"){
+                    actionBtn = '<button class="view-children-btn" onclick="window.location.href=\'children.html?orphanage='+ticket.orphanageId+'\'">View Children →</button>';
+                }
+
+                html+='<div class="ticket-card">';
+                html+='<div class="ticket-icon">'+icon+'</div>';
+                html+='<div class="ticket-info">';
+                html+='<h3>'+typeName+' — '+ticket.orphanageName+'</h3>';
+                html+='<p>'+detail+'</p>';
+                html+='<span class="ticket-meta">Submitted on '+date+'</span>';
+                html+='</div>';
+                html+='<div class="ticket-status">';
+                html+='<span class="status-badge '+ticket.status+'">'+ticket.status+'</span>';
+                html+=actionBtn;
+                html+='</div></div>';
+            });
+            list.innerHTML = html;
+        }
+
+        loadTickets();
+    </script>
+
+</body>
+</html>

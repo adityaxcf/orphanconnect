@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Volunteer - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand"><span>🏠</span><span>OrphanConnect</span></div>
+        <div class="nav-right">
+            <a href="home.html" class="nav-back">← Back</a>
+            <a href="login.html" class="nav-logout" onclick="localStorage.clear()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="detail-wrapper">
+        <div class="detail-header">
+            <h1>Volunteer</h1>
+            <p id="orphanage-name">Loading...</p>
+        </div>
+        <div class="detail-section">
+            <form>
+                <div class="field"><label>Full Name</label><br><input type="text" id="name" placeholder="Your full name"></div>
+                <div class="field"><label>Email</label><br><input type="text" id="email" placeholder="you@example.com"></div>
+                <div class="field"><label>Phone Number</label><br><input type="text" id="phone" placeholder="Your phone number"></div>
+                <div class="field"><label>Age</label><br><input type="text" id="age" placeholder="Your age"></div>
+                <div class="field">
+                    <label>Availability</label><br>
+                    <select id="availability">
+                        <option value="">Select availability</option>
+                        <option value="Weekdays">Weekdays</option>
+                        <option value="Weekends">Weekends</option>
+                        <option value="Both">Both</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Type of Help</label><br>
+                    <select id="help-type">
+                        <option value="">Select type of help</option>
+                        <option value="Teaching">Teaching</option>
+                        <option value="Cooking">Cooking</option>
+                        <option value="Medical">Medical</option>
+                        <option value="General Help">General Help</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="field"><label>Message / Note (Optional)</label><br><textarea id="message" placeholder="Anything you want the orphanage to know"></textarea></div>
+                <button onclick="return handleVolunteer()">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer"><p>© 2025 OrphanConnect &nbsp;|&nbsp; Hubli, Karnataka</p></footer>
+
+    <script>
+        const API = "http://localhost:3001/api";
+        var params = new URLSearchParams(window.location.search);
+        var orphanageId = params.get("orphanage");
+        var orphanageName = params.get("name") || "Orphanage";
+        document.getElementById("orphanage-name").textContent = "Volunteering for "+orphanageName;
+
+        function getToken(){ return localStorage.getItem("token")||""; }
+
+        async function handleVolunteer(){
+            event.preventDefault();
+            var name = document.getElementById("name").value.trim();
+            var email = document.getElementById("email").value.trim();
+            var phone = document.getElementById("phone").value.trim();
+            var age = document.getElementById("age").value.trim();
+            var availability = document.getElementById("availability").value;
+            var helpType = document.getElementById("help-type").value;
+            var message = document.getElementById("message").value.trim();
+            var emailPattern = /^[a-zA-Z0-9._]+@[a-zA-Z0-9]+(\.[a-zA-Z]{2,})+$/;
+
+            if(name==""){alert("Name cannot be blank.");return false;}
+            if(email==""){alert("Email cannot be blank.");return false;}
+            if(!emailPattern.test(email)){alert("Enter a valid email address.");return false;}
+            if(phone==""||phone.length!=10){alert("Enter a valid 10 digit phone number.");return false;}
+            if(age==""){alert("Age cannot be blank.");return false;}
+            if(isNaN(age)||age<18){alert("You must be at least 18 to volunteer.");return false;}
+            if(availability==""){alert("Please select your availability.");return false;}
+            if(helpType==""){alert("Please select your type of help.");return false;}
+
+            var ticket = {
+                userName: name, userEmail: email, userPhone: phone,
+                orphanageId, orphanageName,
+                type: "volunteer",
+                age: parseInt(age), availability, helpType, message
+            };
+
+            var res = await fetch(API+"/tickets", {
+                method: "POST",
+                headers: {"Content-Type":"application/json","Authorization":"Bearer "+getToken()},
+                body: JSON.stringify(ticket)
+            });
+
+            if(res.ok){
+                alert("Thank you for volunteering! You can track your ticket in My Tickets.");
+                window.location.href = "home.html";
+            } else {
+                alert("Something went wrong. Please try again.");
+            }
+            return false;
+        }
+    </script>
+
+</body>
+</html>

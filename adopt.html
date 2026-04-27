@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adopt - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand"><span>🏠</span><span>OrphanConnect</span></div>
+        <div class="nav-right">
+            <a href="home.html" class="nav-back">← Back</a>
+            <a href="login.html" class="nav-logout" onclick="localStorage.clear()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="detail-wrapper">
+        <div class="detail-header">
+            <h1>Adopt a Child</h1>
+            <p id="orphanage-label">Loading...</p>
+        </div>
+        <div class="detail-section">
+            <h2>Your Information</h2>
+            <form>
+                <div class="field"><label>Full Name</label><br><input type="text" id="name" placeholder="Your full name"></div>
+                <div class="field"><label>Email</label><br><input type="text" id="email" placeholder="you@example.com"></div>
+                <div class="field"><label>Phone Number</label><br><input type="text" id="phone" placeholder="10-digit phone number"></div>
+                <div class="field"><label>Age</label><br><input type="number" id="age" placeholder="Your age" min="21"></div>
+                <div class="field">
+                    <label>Marital Status</label><br>
+                    <select id="marital">
+                        <option value="">Select status</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Divorced">Divorced</option>
+                        <option value="Widowed">Widowed</option>
+                    </select>
+                </div>
+                <div class="field"><label>Occupation</label><br><input type="text" id="occupation" placeholder="Your occupation"></div>
+                <div class="field"><label>Home City / Address</label><br><input type="text" id="city" placeholder="Your city and address"></div>
+                <div class="field">
+                    <label>Preferred Age Group of Child</label><br>
+                    <select id="age-pref">
+                        <option value="">Select preference</option>
+                        <option value="0–3 years">0–3 years (Infant)</option>
+                        <option value="4–7 years">4–7 years (Toddler)</option>
+                        <option value="8–12 years">8–12 years (Child)</option>
+                        <option value="13–17 years">13–17 years (Teen)</option>
+                        <option value="No preference">No preference</option>
+                    </select>
+                </div>
+                <div class="field"><label>Reason for Adoption</label><br><textarea id="reason" placeholder="Please briefly explain why you wish to adopt..."></textarea></div>
+                <div class="field"><label>Any Additional Information (Optional)</label><br><textarea id="extra" placeholder="Anything else you'd like the orphanage to know..."></textarea></div>
+                <button onclick="return handleAdopt()">Submit Adoption Request</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://localhost:3001/api";
+        var params = new URLSearchParams(window.location.search);
+        var orphanageId = params.get("orphanage");
+        var orphanageName = params.get("name") || "Orphanage";
+        document.getElementById("orphanage-label").textContent = "Requesting adoption from "+orphanageName;
+
+        function getToken(){ return localStorage.getItem("token")||""; }
+
+        async function handleAdopt(){
+            event.preventDefault();
+            var name       = document.getElementById("name").value.trim();
+            var email      = document.getElementById("email").value.trim();
+            var phone      = document.getElementById("phone").value.trim();
+            var age        = document.getElementById("age").value.trim();
+            var marital    = document.getElementById("marital").value;
+            var occupation = document.getElementById("occupation").value.trim();
+            var city       = document.getElementById("city").value.trim();
+            var agePref    = document.getElementById("age-pref").value;
+            var reason     = document.getElementById("reason").value.trim();
+            var emailPattern = /^[a-zA-Z0-9._]+@[a-zA-Z0-9]+(\.[a-zA-Z]{2,})+$/;
+
+            if(name=="")  { alert("Name cannot be blank."); return false; }
+            if(email=="") { alert("Email cannot be blank."); return false; }
+            if(!emailPattern.test(email)){ alert("Enter a valid email address."); return false; }
+            if(phone==""||phone.length!=10||isNaN(phone)){ alert("Enter a valid 10-digit phone number."); return false; }
+            if(age==""||parseInt(age)<21){ alert("You must be at least 21 years old to adopt."); return false; }
+            if(marital=="")    { alert("Please select your marital status."); return false; }
+            if(occupation=="") { alert("Occupation cannot be blank."); return false; }
+            if(city=="")       { alert("Please enter your city/address."); return false; }
+            if(agePref=="")    { alert("Please select your preferred age group."); return false; }
+            if(reason=="")     { alert("Please provide a reason for adoption."); return false; }
+
+            var ticket = {
+                userName: name, userEmail: email, userPhone: phone,
+                orphanageId, orphanageName,
+                type: "adopt",
+                age: parseInt(age), marital, occupation, city, agePref, reason
+            };
+
+            var res = await fetch(API+"/tickets", {
+                method: "POST",
+                headers: {"Content-Type":"application/json","Authorization":"Bearer "+getToken()},
+                body: JSON.stringify(ticket)
+            });
+
+            if(res.ok){
+                // ✅ Calculate visit deadline (2 days from today)
+                var visitDate = new Date();
+                visitDate.setDate(visitDate.getDate() + 2);
+                var formattedDate = visitDate.toLocaleDateString("en-IN", {
+                    weekday: "long", day: "numeric", month: "long", year: "numeric"
+                });
+
+                // ✅ Update occupied count on the orphanage (+1)
+                try {
+                    var oRes = await fetch(API+"/orphanages/"+orphanageId);
+                    var oData = await oRes.json();
+                    var newOccupied = Math.max(0, (oData.occupied || 0) - 1);
+                    var newVacant   = (oData.vacant || 0) + 1;
+                    await fetch(API+"/orphanages/"+orphanageId, {
+                        method: "PATCH",
+                        headers: {"Content-Type":"application/json","Authorization":"Bearer "+getToken()},
+                        body: JSON.stringify({ occupied: newOccupied, vacant: newVacant })
+                    });
+                } catch(e) {
+                    console.log("Could not update occupancy:", e);
+                }
+
+                alert(
+                    "🏠 Your adoption request has been submitted!\n\n" +
+                    "✅ Your visit has been scheduled.\n" +
+                    "📅 Please visit " + orphanageName + " by " + formattedDate + " to complete the formalities.\n\n" +
+                    "You can track your request in My Tickets."
+                );
+                window.location.href = "home.html";
+            } else {
+                alert("Something went wrong. Please try again.");
+            }
+            return false;
+        }
+    </script>
+
+</body>
+</html>

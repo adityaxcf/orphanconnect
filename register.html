@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="branding">
+        <span class="brand-icon">🏠</span>
+        <span class="brand-name">OrphanConnect</span>
+    </div>
+
+    <div class="hero-text">
+        <h1 class="hero-title">Orphanages in Hubli,<br><span>at your fingertips.</span></h1>
+        <p class="hero-sub">Browse, explore and support orphanages near you.</p>
+    </div>
+
+    <div class="wrapper">
+        <div class="card floating">
+            <div class="card-accent"></div>
+            <div class="card-header">
+                <h2>Create Account</h2>
+                <p>Join and get started</p>
+            </div>
+            <form>
+                <div class="field">
+                    <label>Full Name</label><br>
+                    <input type="text" id="name" placeholder="Your full name">
+                </div>
+                <div class="field">
+                    <label>Email Address</label><br>
+                    <input type="text" id="email" placeholder="you@example.com">
+                </div>
+                <div class="field">
+                    <label>Password</label><br>
+                    <input type="password" id="password" placeholder="Create a password">
+                </div>
+                <div class="field">
+                    <label>Confirm Password</label><br>
+                    <input type="password" id="confirm" placeholder="Repeat your password">
+                </div>
+                <button onclick="return handleRegister()">Create Account</button>
+                <p class="switch-text">
+                    Already have an account? <a href="login.html">Sign in here</a>
+                </p>
+                <div class="register-orphanage-divider">
+                    <p>Are you an orphanage owner?</p>
+                    <a href="register-orphanage.html" class="register-orphanage-link">🏠 Register your Orphanage</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://localhost:3001/api";
+
+        async function handleRegister(){
+            var name = document.getElementById("name").value.trim();
+            var email = document.getElementById("email").value.trim();
+            var password = document.getElementById("password").value;
+            var confirm = document.getElementById("confirm").value;
+            var emailPattern = /^[a-zA-Z0-9._]+@[a-zA-Z0-9]+(\.[a-zA-Z]{2,})+$/;
+
+            if(name==""){alert("Full name cannot be blank.");return false;}
+            if(email==""){alert("Email cannot be blank.");return false;}
+            if(!emailPattern.test(email)){alert("Enter a valid email address.");return false;}
+            if(password==""){alert("Password cannot be blank.");return false;}
+            if(password.length<6){alert("Password must be at least 6 characters.");return false;}
+            if(password!=confirm){alert("Passwords do not match.");return false;}
+
+            var res = await fetch(API+"/auth/register", {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({name, email, password})
+            });
+            var data = await res.json();
+
+            if(!res.ok){alert(data.error);return false;}
+
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            window.location.href = "home.html";
+            return false;
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orphanage - OrphanConnect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dot-grid"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span>🏠</span>
+            <span>OrphanConnect</span>
+        </div>
+        <div class="nav-right">
+            <a href="home.html" class="nav-back">← Back</a>
+            <a href="login.html" class="nav-logout" onclick="localStorage.clear()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="detail-wrapper">
+        <div class="detail-header">
+            <h1 id="page-title">Loading...</h1>
+            <p id="page-location">📍 Hubli, Karnataka</p>
+        </div>
+        <div class="detail-section">
+            <h2>About</h2>
+            <p id="about-text">—</p>
+        </div>
+        <div class="detail-section">
+            <h2>Owner / Contact Details</h2>
+            <table class="detail-table">
+                <tr><td>Owner Name</td><td id="owner-name">—</td></tr>
+                <tr><td>Phone</td><td id="owner-phone">—</td></tr>
+                <tr><td>Email</td><td id="owner-email">—</td></tr>
+                <tr><td>Established</td><td id="established">—</td></tr>
+            </table>
+        </div>
+        <div class="detail-section">
+            <h2>Capacity & Vacancy</h2>
+            <div class="capacity-row">
+                <div class="capacity-box">
+                    <span class="capacity-num" id="cap-total">--</span>
+                    <span class="capacity-label">Total Capacity</span>
+                </div>
+                <div class="capacity-box">
+                    <span class="capacity-num" id="cap-occupied">--</span>
+                    <span class="capacity-label">Currently Occupied</span>
+                </div>
+                <div class="capacity-box">
+                    <span class="capacity-num" id="cap-vacant">--</span>
+                    <span class="capacity-label">Vacant</span>
+                </div>
+            </div>
+        </div>
+        <div class="detail-section">
+            <h2>Facilities</h2>
+            <div class="facilities-grid" id="facilities-grid">—</div>
+        </div>
+        <div class="detail-section">
+            <h2>Location</h2>
+            <div class="map-placeholder" id="map-container">🗺️ Location not set yet</div>
+        </div>
+        <div class="detail-section donate-section" id="action-btns"></div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2025 OrphanConnect &nbsp;|&nbsp; Hubli, Karnataka</p>
+    </footer>
+
+    <script>
+        const API = "http://localhost:3001/api";
+        var params = new URLSearchParams(window.location.search);
+        var orphanageId = params.get("id");
+
+        async function loadOrphanage(){
+            var res = await fetch(API+"/orphanages/"+orphanageId);
+            var data = await res.json();
+            if(!res.ok){ document.getElementById("page-title").textContent="Orphanage not found"; return; }
+
+            document.title = data.name+" - OrphanConnect";
+            document.getElementById("page-title").textContent = data.name;
+            document.getElementById("page-location").textContent = "📍 "+data.address;
+            document.getElementById("about-text").textContent = data.about;
+            document.getElementById("owner-name").textContent = data.ownerName||"—";
+            document.getElementById("owner-phone").textContent = data.ownerPhone||"—";
+            document.getElementById("owner-email").textContent = data.ownerEmail||"—";
+            document.getElementById("established").textContent = data.established||"—";
+            document.getElementById("cap-total").textContent = data.capacity;
+            document.getElementById("cap-occupied").textContent = data.occupied;
+            document.getElementById("cap-vacant").textContent = data.vacant;
+
+            if(data.facilities && data.facilities.length>0){
+                document.getElementById("facilities-grid").innerHTML = data.facilities.map(function(f){
+                    return '<div class="facility-badge">'+f+'</div>';
+                }).join("");
+            }
+
+            if(data.mapLink){
+                document.getElementById("map-container").innerHTML =
+                    '<iframe src="'+data.mapLink+'" width="100%" height="200" style="border:0;border-radius:8px;" allowfullscreen loading="lazy"></iframe>';
+            }
+
+            var encodedName = encodeURIComponent(data.name);
+            document.getElementById("action-btns").innerHTML =
+                '<button class="donate-btn" onclick="window.location.href=\'donate.html?orphanage='+orphanageId+'&name='+encodedName+'\'">Donate</button>'+
+                '<button class="donate-btn" onclick="window.location.href=\'volunteer.html?orphanage='+orphanageId+'&name='+encodedName+'\'">Volunteer</button>'+
+                '<button class="donate-btn" onclick="window.location.href=\'adopt.html?orphanage='+orphanageId+'&name='+encodedName+'\'">Adopt</button>';
+        }
+
+        loadOrphanage();
+    </script>
+
+</body>
+</html>
