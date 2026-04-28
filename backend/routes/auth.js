@@ -1,3 +1,4 @@
+const { authMiddleware, adminOnly } = require("../middleware/auth");
 const express = require("express");
 const router  = express.Router();
 const bcrypt  = require("bcryptjs");
@@ -81,6 +82,15 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, orphanageId: user.orphanageId } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/all-users", authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const users = await User.find({}, "-password").sort({ createdAt: -1 });
+    res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

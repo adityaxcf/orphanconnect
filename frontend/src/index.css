@@ -1,3 +1,19 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  width: 100%;
+}
+
+body {
+  background: #f4f7fb;
+  font-family: 'DM Sans', sans-serif;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -45,32 +61,37 @@ body {
 }
 
 .branding {
-    position: relative;
-    z-index: 1;
-    margin-top: 36px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #3b5998;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    background: rgba(255,255,255,0.92);
-    padding: 8px 20px;
-    border-radius: 30px;
-    box-shadow: 0 2px 14px rgba(74,114,196,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 40px;
+  margin-bottom: 10px;
+}
+
+.brand-icon {
+  font-size: 28px;
+  background: #fff;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(74,114,196,0.15);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e2a3a;
 }
 
 .brand-icon { font-size: 18px; }
 
 .hero-text {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    margin-top: 30px;
-    margin-bottom: 34px;
-    padding: 0 20px;
-    animation: fadeSlideDown 0.8s ease both;
+  text-align: center;
+  padding: 60px 20px 20px;
 }
 
 .hero-title {
@@ -101,12 +122,11 @@ body {
 }
 
 .wrapper {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 0 15px;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 20px 40px;
 }
 
 .card {
