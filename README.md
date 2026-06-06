@@ -18,4 +18,4 @@ A full-stack MERN web platform to connect orphanages in Hubli, Karnataka with do
 - **Backend:** Node.js, Express.js
 - **Database:** MongoDB Atlas
 - **Payment:** Razorpay
-- **Auth:** JWT (JSON Web Tokens)
+- **Auth:** JWT
