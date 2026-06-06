@@ -1,6 +1,6 @@
 # OrphanConnect 🏠
 
-> 📚 Built by me (Aditya J) as a 4th Semester Software Engineering (SE) and Web Technologies (WT) project.
+> 📚 Built as a 4th Semester Software Engineering (SE) and Web Technologies (WT) project.
 
 A full-stack MERN web platform to connect orphanages in Hubli, Karnataka with donors, volunteers, and adoptive parents.
 
