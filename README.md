@@ -19,3 +19,20 @@ A full-stack MERN web platform to connect orphanages in Hubli, Karnataka with do
 - **Database:** MongoDB Atlas
 - **Payment:** Razorpay
 - **Auth:** JWT
+
+
+## Local setup
+
+1. Install backend dependencies: `cd backend && npm install`.
+2. Copy `backend/.env.example` to `backend/.env` and fill in MongoDB and Razorpay credentials.
+3. Generate a bcrypt password hash for the admin account from the backend directory:
+   `node -e "require('bcryptjs').hash('YOUR_STRONG_PASSWORD', 12).then(console.log)"`
+4. Set `ADMIN_EMAIL` and the generated `ADMIN_PASSWORD_HASH` in `backend/.env`. The admin password is never stored in source code.
+5. Set a random `JWT_SECRET` of at least 32 characters.
+6. For the frontend, copy `frontend/.env.example` to `frontend/.env` and set the public Razorpay key ID.
+
+Never commit `.env` files or expose `RAZORPAY_KEY_SECRET` or `JWT_SECRET` to the frontend. If any real credentials were previously committed, rotate them in their respective provider dashboards; deleting a file does not remove it from Git history.
+
+## Security notes
+
+The payment order endpoint currently accepts an amount from the authenticated client's request. Before using live payments, change this flow so the server calculates the amount from a trusted donation record and validates the donation state; client-supplied amounts must not be treated as authoritative.
